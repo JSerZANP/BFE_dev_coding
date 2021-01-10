@@ -3,6 +3,8 @@ And a video explaining this :
 https://www.youtube.com/watch?v=1-KkkYt7bRk
 
 
+## without RegExp
+
 ```typescript
 
 
@@ -117,6 +119,63 @@ function parse(code: string): JSXElement {
 
 function generate(ast: JSXElement): string {
   const {openingElement, children} = ast
+  if (children[0]) {
+    return `h("${openingElement.tag}", null, "${children[0]}")`
+  } else {
+    return `h("${openingElement.tag}", null)`
+  }
+}
+
+
+
+```
+
+
+## with RegExp
+
+```typescript
+
+
+type JSXOpeningElement = {
+  tag: string
+}
+
+type JSXClosingElement = {
+  tag: string
+}
+
+type JSXChildren = string[]
+
+type JSXElement= {
+  openingElement: JSXOpeningElement
+  children: JSXChildren
+  closingElement: JSXClosingElement
+}
+
+function parse(code: string): JSXElement {
+  const reg = /^\s*<\s*(\S+)\s*>([^<>]*)<\s*\/\s*(\S+)\s*>\s*$/
+  const match = code.match(reg)
+  if (match) {
+    const element = {
+      openingElement: {
+        tag: match[1],
+      },
+      children: [match[2]],
+      closingElement: {
+        tag: match[3]
+      }
+    }
+    if (element.openingElement.tag !== element.closingElement.tag) {
+      throw new Error('no match')
+    }
+    return element
+  } else {
+    throw new Error('error')
+  }
+}
+
+function generate(ast: JSXElement): string {
+  const {openingElement, children, closingElement} = ast
   if (children[0]) {
     return `h("${openingElement.tag}", null, "${children[0]}")`
   } else {
